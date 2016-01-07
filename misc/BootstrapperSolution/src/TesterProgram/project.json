@@ -1,5 +1,11 @@
 {
+<<<<<<< HEAD
   "dependencies": {},
+=======
+  "dependencies": {
+  },
+
+>>>>>>> refs/remotes/aspnet/dev
   "commands": {
     "TesterProgram": "TesterProgram"
   },
@@ -7,7 +13,11 @@
     "dnx451": {},
     "dnxcore50": {
       "dependencies": {
+<<<<<<< HEAD
         "Microsoft.CSharp": "4.0.1-beta-23516"
+=======
+        "Microsoft.CSharp": "4.0.1-*"
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   }

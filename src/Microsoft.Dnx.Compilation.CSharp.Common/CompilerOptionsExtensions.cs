@@ -10,7 +10,7 @@ using System.Runtime.Versioning;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Dnx.Runtime.Common.Impl;
 
 namespace Microsoft.Dnx.Compilation.CSharp
@@ -97,11 +97,10 @@ namespace Microsoft.Dnx.Compilation.CSharp
 
             var keyFile =
                 Environment.GetEnvironmentVariable(EnvironmentNames.BuildKeyFile) ??
-                compilerOptions.KeyFile;
+                GetKeyFileFullPath(projectDirectory, compilerOptions.KeyFile);
 
-            if (!string.IsNullOrEmpty(keyFile))
+            if (!string.IsNullOrWhiteSpace(keyFile))
             {
-                keyFile = Path.GetFullPath(Path.Combine(projectDirectory, compilerOptions.KeyFile));
 #if DOTNET5_4
                 return options.WithCryptoPublicKey(
                     SnkUtils.ExtractPublicKey(File.ReadAllBytes(keyFile)));
@@ -126,6 +125,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
             }
 
             return useOssSigning ? options.WithCryptoPublicKey(StrongNameKey) : options;
+        }
+
+        private static string GetKeyFileFullPath(string projectDirectory, string keyFile)
+        {
+            return string.IsNullOrWhiteSpace(keyFile) ? keyFile : Path.GetFullPath(Path.Combine(projectDirectory, keyFile));
         }
 
         private static bool IsDesktop(FrameworkName frameworkName)

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Helpers;
 using Microsoft.Dnx.Tooling.Utils;
@@ -151,14 +152,15 @@ namespace Microsoft.Dnx.Tooling.Publish
                     runtimeProbePaths = new List<string>();
                     runtimeProbePaths.Add(runtime);
                     var runtimeHome = Environment.GetEnvironmentVariable(EnvironmentNames.Home);
+                    var pathSeparator = Path.PathSeparator;
                     if (string.IsNullOrEmpty(runtimeHome))
                     {
                         var runtimeGlobalPath = DnuEnvironment.GetFolderPath(DnuFolderPath.DnxGlobalPath);
                         var defaultRuntimeHome = DnuEnvironment.GetFolderPath(DnuFolderPath.DefaultDnxHome);
-                        runtimeHome = $"{defaultRuntimeHome};{runtimeGlobalPath}";
+                        runtimeHome = $"{defaultRuntimeHome}{pathSeparator}{runtimeGlobalPath}";
                     }
 
-                    foreach (var portion in runtimeHome.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                    foreach (var portion in runtimeHome.Split(new[] { pathSeparator }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         var packagesPath = Path.Combine(
                             Environment.ExpandEnvironmentVariables(portion),
@@ -278,7 +280,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                     }
                     else
                     {
-                        if (library.Type == LibraryTypes.Project)
+                        if (library.Type == Runtime.LibraryTypes.Project)
                         {
                             if (!root.Projects.Any(p => p.Library.Name == library.Identity.Name))
                             {
@@ -292,7 +294,7 @@ namespace Microsoft.Dnx.Tooling.Publish
                                 root.Projects.Add(publishProject);
                             }
                         }
-                        else if (library.Type == LibraryTypes.Package)
+                        else if (library.Type == Runtime.LibraryTypes.Package)
                         {
                             if (!root.Packages.Any(p => p.Library.Name == library.Identity.Name && p.Library.Version == library.Identity.Version))
                             {

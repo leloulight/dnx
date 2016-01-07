@@ -10,7 +10,11 @@
     "dnx451": {},
     "dnxcore50": {
       "dependencies": {
+<<<<<<< HEAD
         "System.Runtime": "4.0.21-beta-23516"
+=======
+        "System.Runtime": "4.0.0-*"
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   }

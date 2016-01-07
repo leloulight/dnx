@@ -16,8 +16,10 @@ using Microsoft.Dnx.DesignTimeHost.Models;
 using Microsoft.Dnx.DesignTimeHost.Models.IncomingMessages;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Loader;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
+using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -575,7 +577,7 @@ namespace Microsoft.Dnx.DesignTimeHost
             {
                 var appHostContext = CreateApplicationHostContext(ctx, project, _applicationEnvironment.RuntimeFramework, _runtimeEnvironment.GetAllRuntimeIdentifiers());
 
-                return new RuntimeLoadContext($"{project.Name}_plugin", appHostContext.LibraryManager.GetLibraryDescriptions(), _compilationEngine, _defaultLoadContext);
+                return new RuntimeLoadContext($"{project.Name}_plugin", appHostContext.LibraryManager.GetLibraryDescriptions(), _compilationEngine, _defaultLoadContext, _configuration.Value);
             });
         }
 

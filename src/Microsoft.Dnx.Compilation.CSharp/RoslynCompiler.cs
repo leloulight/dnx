@@ -14,8 +14,10 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
+using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 
 namespace Microsoft.Dnx.Compilation.CSharp
 {
@@ -56,7 +58,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
             CompilationProjectContext projectContext,
             IEnumerable<IMetadataReference> incomingReferences,
             IEnumerable<ISourceReference> incomingSourceReferences,
-            Func<IList<ResourceDescriptor>> resourcesResolver)
+            Func<IList<ResourceDescriptor>> resourcesResolver,
+            string configuration)
         {
             var path = projectContext.ProjectDirectory;
             var name = projectContext.Target.Name;
@@ -119,7 +122,11 @@ namespace Microsoft.Dnx.Compilation.CSharp
             if (isPreprocessAspect)
             {
                 compilationSettings.CompilationOptions =
-                    compilationSettings.CompilationOptions.WithOutputKind(OutputKind.DynamicallyLinkedLibrary);
+                    compilationSettings.CompilationOptions
+                        .WithOutputKind(OutputKind.DynamicallyLinkedLibrary)
+                        .WithCryptoKeyFile(null)
+                        .WithCryptoPublicKey(ImmutableArray<byte>.Empty)
+                        .WithDelaySign(false);
             }
 
             var compilation = CSharpCompilation.Create(
@@ -143,7 +150,7 @@ namespace Microsoft.Dnx.Compilation.CSharp
             {
                 try
                 {
-                    var modules = GetCompileModules(projectContext.Target).Modules;
+                    var modules = GetCompileModules(projectContext.Target, configuration).Modules;
 
                     foreach (var m in modules)
                     {
@@ -191,16 +198,8 @@ namespace Microsoft.Dnx.Compilation.CSharp
                     return;
                 }
 #endif
-                // Workaround for https://github.com/dotnet/roslyn/issues/6326
                 compilationContext.Diagnostics.Add(
-                    Diagnostic.Create(id: "DNX1001",
-                        title: "Strong name generation with a private and public key pair is not supported on this platform",
-                        message: "Strong name generation with a private and public key pair is supported only on desktop CLR. Falling back to OSS signing.",
-                        category: "StrongNaming",
-                        defaultSeverity: DiagnosticSeverity.Warning,
-                        severity: DiagnosticSeverity.Warning,
-                        warningLevel: 1,
-                        isEnabledByDefault: true));
+                    Diagnostic.Create(RoslynDiagnostics.RealSigningSupportedOnlyOnDesktopClr, null));
             }
         }
 
@@ -217,14 +216,14 @@ namespace Microsoft.Dnx.Compilation.CSharp
             }
         }
 
-        private CompilationModules GetCompileModules(CompilationTarget target)
+        private CompilationModules GetCompileModules(CompilationTarget target, string configuration)
         {
             // The only thing that matters is the runtime environment
             // when loading the compilation modules, so use that as the cache key
             var key = Tuple.Create(
                 target.Name,
                 _environment.RuntimeFramework,
-                _environment.Configuration,
+                configuration,
                 "compilemodules");
 
             return _cache.Get<CompilationModules>(key, _ =>

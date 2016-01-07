@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Dnx.Compilation;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Dnx.Compilation.DesignTime;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -35,7 +35,7 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 socket.Connect(new IPEndPoint(IPAddress.Loopback, server.Port));
 
                 var stream = new NetworkStream(socket);
-                var compiler = new DesignTimeHostCompiler(new MockApplicationShutdown(), stream);
+                var compiler = new DesignTimeHostCompiler(stream);
 
                 client.SendPayLoad(1, DthMessageTypes.EnumerateProjectContexts);
 
@@ -49,19 +49,6 @@ namespace Microsoft.Dnx.DesignTimeHost.FunctionalTests
                 Assert.NotNull(response);
                 Assert.Empty(response.Diagnostics);
                 Assert.NotEmpty(response.AssemblyBytes);
-            }
-        }
-
-        class MockApplicationShutdown : IApplicationShutdown
-        {
-            public CancellationToken ShutdownRequested
-            {
-                get { throw new NotImplementedException(); }
-            }
-
-            public void RequestShutdown()
-            {
-                throw new NotImplementedException();
             }
         }
     }

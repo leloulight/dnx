@@ -11,6 +11,8 @@ using System.Runtime.Versioning;
 using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.DependencyInjection;
 using Microsoft.Dnx.Runtime.Compilation;
@@ -29,7 +31,6 @@ namespace Microsoft.Dnx.ApplicationHost
 
         private readonly string _projectDirectory;
         private readonly FrameworkName _targetFramework;
-        private readonly ApplicationShutdown _shutdown = new ApplicationShutdown();
         private readonly IList<IAssemblyLoader> _loaders = new List<IAssemblyLoader>();
         private readonly IAssemblyLoadContextAccessor _loadContextAccessor;
         private readonly IRuntimeEnvironment _runtimeEnvironment;
@@ -37,7 +38,7 @@ namespace Microsoft.Dnx.ApplicationHost
         private Project _project;
         private readonly ServiceProvider _serviceProvider;
 
-        public DefaultHost(RuntimeOptions options,
+        public DefaultHost(DefaultHostOptions options,
                            IAssemblyLoadContextAccessor loadContextAccessor)
         {
             _projectDirectory = Path.GetFullPath(options.ApplicationBaseDirectory);
@@ -103,7 +104,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             });
         }
 
-        private void Initialize(RuntimeOptions options, IAssemblyLoadContextAccessor loadContextAccessor)
+        private void Initialize(DefaultHostOptions options, IAssemblyLoadContextAccessor loadContextAccessor)
         {
             var applicationHostContext = new ApplicationHostContext
             {
@@ -132,17 +133,13 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
             // If this is null (i.e. there is no Host Application Environment), that's OK, the Application Environment we are creating
             // will just have it's own independent set of global data.
             var hostEnvironment = PlatformServices.Default.Application;
-            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, options.Configuration, hostEnvironment);
+            var applicationEnvironment = new ApplicationEnvironment(Project, _targetFramework, hostEnvironment);
 
             var compilationContext = new CompilationEngineContext(
                 applicationEnvironment,
                 _runtimeEnvironment,
                 loadContextAccessor.Default,
                 new CompilationCache());
-
-            // Compilation services available only for runtime compilation
-            compilationContext.AddCompilationService(typeof(RuntimeOptions), options);
-            compilationContext.AddCompilationService(typeof(IApplicationShutdown), _shutdown);
 
             var compilationEngine = new CompilationEngine(compilationContext);
             var runtimeLibraryExporter = new RuntimeLibraryExporter(() => compilationEngine.CreateProjectExporter(Project, _targetFramework, options.Configuration));
@@ -151,37 +148,29 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
 
             // Default services
             _serviceProvider.Add(typeof(ILibraryExporter), runtimeLibraryExporter);
-            _serviceProvider.Add(typeof(IApplicationShutdown), _shutdown);
             _serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
             _serviceProvider.Add(typeof(IRuntimeEnvironment), PlatformServices.Default.Runtime);
             _serviceProvider.Add(typeof(ILibraryManager), runtimeLibraryManager);
             _serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), PlatformServices.Default.AssemblyLoadContextAccessor);
             _serviceProvider.Add(typeof(IAssemblyLoaderContainer), PlatformServices.Default.AssemblyLoaderContainer);
-
-
-            PlatformServices.SetDefault(
-                PlatformServices.Create(
-                    PlatformServices.Default,
-                    application: applicationEnvironment,
-                    libraryManager: runtimeLibraryManager
-                    ));
+            
+            PlatformServices.SetDefault(new ApplicationHostPlatformServices(PlatformServices.Default, applicationEnvironment, runtimeLibraryManager));
 
             if (options.CompilationServerPort.HasValue)
             {
                 // Change the project reference provider
                 Project.DefaultCompiler = Project.DefaultDesignTimeCompiler;
+                Project.DesignTimeCompilerPort = options.CompilationServerPort.Value;
             }
 
-            CallContextServiceLocator.Locator.ServiceProvider = _serviceProvider;
-
             // TODO: Dedupe this logic in the RuntimeLoadContext
-            var projects = libraries.Where(p => p.Type == LibraryTypes.Project)
+            var projects = libraries.Where(p => p.Type == Runtime.LibraryTypes.Project)
                                     .ToDictionary(p => p.Identity.Name, p => (ProjectDescription)p);
 
             var assemblies = PackageDependencyProvider.ResolvePackageAssemblyPaths(libraries);
 
             // Configure Assembly loaders
-            _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects.Values));
+            _loaders.Add(new ProjectAssemblyLoader(loadContextAccessor, compilationEngine, projects.Values, options.Configuration));
             _loaders.Add(new PackageAssemblyLoader(loadContextAccessor, assemblies, libraries));
 
             var compilerOptionsProvider = new CompilerOptionsProvider(projects);
@@ -238,7 +227,7 @@ Please make sure the runtime matches a framework specified in {Project.ProjectFi
         {
             foreach (var library in libraries)
             {
-                if (library.Type == LibraryTypes.Package)
+                if (library.Type == Runtime.LibraryTypes.Package)
                 {
                     var package = (PackageDescription)library;
 

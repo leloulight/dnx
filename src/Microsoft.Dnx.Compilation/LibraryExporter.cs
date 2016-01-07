@@ -9,6 +9,8 @@ using System.Linq;
 using Microsoft.Dnx.Compilation.Caching;
 using Microsoft.Dnx.Runtime;
 using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 using NuGet;
 
 namespace Microsoft.Dnx.Compilation
@@ -57,7 +59,7 @@ namespace Microsoft.Dnx.Compilation
             return GetAllExports(
                 name,
                 aspect: null,
-                libraryFilter: l => l.Type != LibraryTypes.Project);
+                libraryFilter: l => l.Type != Runtime.LibraryTypes.Project);
         }
 
         public LibraryExport GetAllDependencies(
@@ -179,11 +181,11 @@ namespace Microsoft.Dnx.Compilation
                 return null;
             }
 
-            if (string.Equals(LibraryTypes.Package, library.Type, StringComparison.Ordinal))
+            if (string.Equals(Runtime.LibraryTypes.Package, library.Type, StringComparison.Ordinal))
             {
                 return ExportPackage((PackageDescription)library);
             }
-            else if (string.Equals(LibraryTypes.Project, library.Type, StringComparison.Ordinal))
+            else if (string.Equals(Runtime.LibraryTypes.Project, library.Type, StringComparison.Ordinal))
             {
                 return ExportProject((ProjectDescription)library, aspect);
             }
@@ -239,7 +241,7 @@ namespace Microsoft.Dnx.Compilation
 
                     // Create the project exporter
                     var exporter = _compilationEngine.CreateProjectExporter(project.Project, project.Framework, _configuration);
-                    context.LoadContext = _compilationEngine.CreateBuildLoadContext(project.Project);
+                    context.LoadContext = _compilationEngine.CreateBuildLoadContext(project.Project, _configuration);
 
                     // Get the exports for the project dependencies
                     var projectDependenciesExport = new Lazy<LibraryExport>(() => exporter.GetAllDependencies(project.Identity.Name, aspect));
@@ -253,7 +255,8 @@ namespace Microsoft.Dnx.Compilation
                     IMetadataProjectReference projectReference = projectCompiler.CompileProject(
                         compilationContext,
                         () => projectDependenciesExport.Value,
-                        () => CompositeResourceProvider.Default.GetResources(project.Project));
+                        () => CompositeResourceProvider.Default.GetResources(project.Project),
+                        _configuration);
 
                     metadataReferences.Add(projectReference);
 

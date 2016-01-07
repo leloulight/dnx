@@ -5,8 +5,13 @@
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
+<<<<<<< HEAD
     "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-rc1-update1",
     "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-20151109-01"
+=======
+    "Microsoft.Extensions.CompilationAbstractions": "1.0.0-*",
+    "Microsoft.CodeAnalysis.CSharp": "1.1.0-rc1-*"
+>>>>>>> refs/remotes/aspnet/dev
   },
   "frameworks": {
     "net451": {
@@ -14,7 +19,11 @@
     },
     "dotnet5.4": {
       "dependencies": {
+<<<<<<< HEAD
         "System.Runtime": "4.0.21-beta-23516"
+=======
+        "System.Runtime": "4.0.21-*"
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   },

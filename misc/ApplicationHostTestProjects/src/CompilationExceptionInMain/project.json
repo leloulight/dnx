@@ -1,12 +1,20 @@
 {
   "dependencies": {
+<<<<<<< HEAD
     "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-rc1-update1"
+=======
+    "Microsoft.Extensions.CompilationAbstractions": "1.0.0-*"
+>>>>>>> refs/remotes/aspnet/dev
   },
   "frameworks": {
     "dnx451": {},
     "dnxcore50": {
       "dependencies": {
+<<<<<<< HEAD
         "System.Runtime": "4.0.21-beta-23516"
+=======
+        "System.Runtime": "4.0.21-*"
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   }

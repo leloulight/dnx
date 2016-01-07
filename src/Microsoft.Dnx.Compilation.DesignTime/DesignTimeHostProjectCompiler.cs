@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Runtime;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.Dnx.Compilation.DesignTime
@@ -14,22 +16,23 @@ namespace Microsoft.Dnx.Compilation.DesignTime
     {
         private readonly IDesignTimeHostCompiler _compiler;
 
-        public DesignTimeHostProjectCompiler(IApplicationShutdown shutdown,  RuntimeOptions runtimeOptions)
+        public DesignTimeHostProjectCompiler()
         {
             // Using this ctor because it works on mono, this is hard coded to ipv4
             // right now. Mono will eventually have the dualmode overload
             var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect(new IPEndPoint(IPAddress.Loopback, runtimeOptions.CompilationServerPort.Value));
+            socket.Connect(new IPEndPoint(IPAddress.Loopback, Project.DesignTimeCompilerPort));
 
             var networkStream = new NetworkStream(socket);
 
-            _compiler = new DesignTimeHostCompiler(shutdown, networkStream);
+            _compiler = new DesignTimeHostCompiler(networkStream);
         }
 
         public IMetadataProjectReference CompileProject(
             CompilationProjectContext projectContext,
             Func<LibraryExport> referenceResolver,
-            Func<IList<ResourceDescriptor>> resourcesResolver)
+            Func<IList<ResourceDescriptor>> resourcesResolver,
+            string configuration)
         {
             // The target framework and configuration are assumed to be correct
             // in the design time process

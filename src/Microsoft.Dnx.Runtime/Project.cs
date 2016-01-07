@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
-using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.Extensions.CompilationAbstractions;
 using NuGet;
 
 namespace Microsoft.Dnx.Runtime
@@ -17,6 +17,7 @@ namespace Microsoft.Dnx.Runtime
 
         public static readonly TypeInformation DefaultRuntimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.CSharp", "Microsoft.Dnx.Compilation.CSharp.RoslynProjectCompiler");
         public static readonly TypeInformation DefaultDesignTimeCompiler = new TypeInformation("Microsoft.Dnx.Compilation.DesignTime", "Microsoft.Dnx.Compilation.DesignTime.DesignTimeHostProjectCompiler");
+        public static int DesignTimeCompilerPort;
 
         public static TypeInformation DefaultCompiler = DefaultRuntimeCompiler;
 

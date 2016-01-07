@@ -2,8 +2,13 @@
   "dependencies": {},
   "frameworks": {
     "dnxcore50": {
+<<<<<<< HEAD
       "dependencies": {
         "System.Runtime": "4.0.21-beta-23516"
+=======
+      "dependencies":{
+        "System.Runtime": "4.0.21-*"
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   }

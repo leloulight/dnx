@@ -61,23 +61,13 @@ namespace Microsoft.Dnx.Host
                                                                         configuration,
                                                                         assembly);
 
-                CallContextServiceLocator.Locator = new ServiceProviderLocator();
-
                 var serviceProvider = new ServiceProvider();
                 serviceProvider.Add(typeof(IAssemblyLoaderContainer), container);
                 serviceProvider.Add(typeof(IAssemblyLoadContextAccessor), accessor);
                 serviceProvider.Add(typeof(IApplicationEnvironment), applicationEnvironment);
                 serviceProvider.Add(typeof(IRuntimeEnvironment), env);
 
-                CallContextServiceLocator.Locator.ServiceProvider = serviceProvider;
-
-                PlatformServices.SetDefault(
-                    PlatformServices.Create(
-                        basePlatformServices: null,
-                        application: applicationEnvironment,
-                        runtime: env,
-                        container: container,
-                        accessor: accessor));
+                PlatformServices.SetDefault(new DnxHostPlatformServices(applicationEnvironment, env, container, accessor));
 
 #if DNX451
                 if (RuntimeEnvironmentHelper.IsMono)

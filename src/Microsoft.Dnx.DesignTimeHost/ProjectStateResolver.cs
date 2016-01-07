@@ -12,9 +12,10 @@ using Microsoft.Dnx.Compilation.CSharp;
 using Microsoft.Dnx.DesignTimeHost.InternalModels;
 using Microsoft.Dnx.DesignTimeHost.Models.OutgoingMessages;
 using Microsoft.Dnx.Runtime;
-using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.Dnx.Runtime.Common.Impl;
 using Microsoft.Dnx.Runtime.Internals;
+using Microsoft.Extensions.CompilationAbstractions;
+using Microsoft.Extensions.CompilationAbstractions.Caching;
 using NuGet;
 
 namespace Microsoft.Dnx.DesignTimeHost
